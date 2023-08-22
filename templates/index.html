@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicament Inference</title>
+</head>
+<body>
+    <h1>MedIn-IA</h1>
+    <form action="/classify/" method="post">
+        <div>
+            <label for="text">Text:</label><br>
+            <textarea id="text" name="text" rows="4" cols="50" required></textarea>
+        </div>
+        <br>
+        <div>
+            <label for="mode">Mode:</label><br>
+            <select id="mode" name="mode">
+                <option value="both">Both</option>
+            </select>
+        </div>
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if results %}
+    <h2>Provável classe terapêutica do medicamento:</h2>
+    {% for result in results %}
+        <h3>Texto Médico:</h3>
+        <p>{{ result.sentence }}</p>
+        
+
+        <h4>Classe Terapêutica:</h4>
+        <ul>
+            {% for topic in result.get('topics', {}).get('topics', []) %}
+                <li>{{ topic }}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+{% endif %}
+</body>
+</html>
+
