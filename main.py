@@ -3,8 +3,6 @@ import time
 import random
 import os
 import openai
-import nltk
-from nltk.corpus import stopwords
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Form, Request
 from pydantic import BaseModel
@@ -13,16 +11,18 @@ from starlette.staticfiles import StaticFiles
 
 from topics import TOPICS_LIST
 
-BRAZILIAN_STOPWORDS = stopwords.words('portuguese')
+#BRAZILIAN_STOPWORDS = stopwords.words('portuguese')
 MAX_RETRIES = 5
 BACKOFF_FACTOR = 0.5
 MODEL = "gpt-4-0613"
 
-load_dotenv()
+load_dotenv(".env")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
+
+openai.api_key = OPENAI_API_KEY
+
+
 
 app = FastAPI()
 
