@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 
 from topics import TOPICS_LIST
+from principios_ativos import PRINCIPIO
 
 
 MAX_RETRIES = 5
