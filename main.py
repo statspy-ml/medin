@@ -11,15 +11,14 @@ from starlette.staticfiles import StaticFiles
 
 from topics import TOPICS_LIST
 
-#BRAZILIAN_STOPWORDS = stopwords.words('portuguese')
+
 MAX_RETRIES = 5
 BACKOFF_FACTOR = 0.5
+TEMPERATURE = 0.0
 MODEL = "gpt-4-0613"
 
 load_dotenv(".env")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-
-
 openai.api_key = OPENAI_API_KEY
 
 
@@ -68,6 +67,7 @@ async def classify_text(request: Request, text: str = Form(...)):
                 messages=messages,
                 functions=functions_topics,
                 function_call=function_call,
+                temperature=TEMPERATURE
             )
             function_call_response = response.choices[0].message["function_call"]
             argument = json.loads(function_call_response["arguments"])
@@ -81,6 +81,10 @@ async def classify_text(request: Request, text: str = Form(...)):
             time.sleep(sleep_time)
 
     results.append(paragraph_result)
+    # Before sending to template
+    if isinstance(paragraph_result["topics"].get('topics', ''), str):
+        paragraph_result["topics"]['topics'] = [paragraph_result["topics"].get('topics', '')]
+
 
     return templates.TemplateResponse("index.html", {"request": request, "results": results})
 
