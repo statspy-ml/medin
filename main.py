@@ -1,92 +1,30 @@
-import json
-import time
-import random
-import os
-import openai
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Form, Request
-from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 
-from topics import TOPICS_LIST
-
-
-MAX_RETRIES = 5
-BACKOFF_FACTOR = 0.5
-TEMPERATURE = 0.0
-MODEL = "gpt-4-0613"
-
-load_dotenv(".env")
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-openai.api_key = OPENAI_API_KEY
+from medication_classifier import MedicationClassifier
 
 
 
 app = FastAPI()
+classifier = MedicationClassifier()  
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/")
-async def serve_home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-@app.post("/classify/")
-async def classify_text(request: Request, text: str = Form(...)):
-    paragraph = text
-
-    functions_topics = [{
-        "name": "print_topics",
-        "description": "A function that prints the given medicament therapeutic classification ",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "topics": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": TOPICS_LIST
-                    },
-                    "description": "The Topics",
-                },
-            },
-            "required": ["topics"],
-        }}]
-
-    results = []
-
-    messages = [{"role": "user", "content": paragraph}]
-    paragraph_result = {"paragraph": paragraph, "sentence":paragraph}
+@app.post("/medicament-recommendation/", response_model=dict)
+async def medicament_recommendation(text: str = Form(...)):
+   
+    classification = classifier.classify_text(text)
+    medicament_type = classification.get("topics", {}).get("topics", [])[0]  
     
-    function_call = {"name": "print_topics"}
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = openai.ChatCompletion.create(
-                model=MODEL,
-                messages=messages,
-                functions=functions_topics,
-                function_call=function_call,
-                temperature=TEMPERATURE
-            )
-            function_call_response = response.choices[0].message["function_call"]
-            argument = json.loads(function_call_response["arguments"])
-            paragraph_result["topics"] = argument
-            break
-        except openai.api_errors.TimeoutError as e:
-            if attempt == MAX_RETRIES - 1:
-                raise e
+   
+    recommendations = classifier.get_medications_by_type(medicament_type)
 
-            sleep_time = BACKOFF_FACTOR * (2 ** attempt) + random.random()
-            time.sleep(sleep_time)
-
-    results.append(paragraph_result)
-    # Before sending to template
-    if isinstance(paragraph_result["topics"].get('topics', ''), str):
-        paragraph_result["topics"]['topics'] = [paragraph_result["topics"].get('topics', '')]
+    
+    return {
+        "classification": medicament_type,
+        "recommendations": recommendations
+    }
 
 
-    return templates.TemplateResponse("index.html", {"request": request, "results": results})
 
 
 
