@@ -16,7 +16,8 @@ from principios_ativos import PRINCIPIO
 MAX_RETRIES = 5
 BACKOFF_FACTOR = 0.5
 TEMPERATURE = 0.0
-MODEL = "gpt-4-0613"
+MODEL = "gpt-3.5-turbo"
+#MODEL = "gpt-4-0613"
 
 load_dotenv(".env")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
